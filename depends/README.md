@@ -1,11 +1,3 @@
-MarsCoin Depends folder documentation
-Updated 7/22/2019
-
-** Read this whole document prior to doing anything.  Note the make options including make download at end of document.
-
-For the latest step-by-step procedures for building Windows using Ubuntu 16, visit our wiki page:
-https://github.com/marscoin/marscoin/wiki/Windows-Build-Notes---Ubuntu-16
-
 ### Usage
 
 To build dependencies for the current arch+OS:
@@ -31,12 +23,12 @@ Common `host-platform-triplets` for cross compilation are:
 - `i686-w64-mingw32` for Win32
 - `x86_64-w64-mingw32` for Win64
 - `x86_64-apple-darwin11` for MacOSX
-- `arm-linux-gnueabihf` for Linux ARM
+- `arm-linux-gnueabihf` for Linux ARM 32 bit
+- `aarch64-linux-gnu` for Linux ARM 64 bit
 
 No other options are needed, the paths are automatically configured.
 
-### Dependency Options
-
+Dependency Options:
 The following can be set when running make: make FOO=bar
 
     SOURCES_PATH: downloaded sources will be placed here
@@ -47,9 +39,18 @@ The following can be set when running make: make FOO=bar
     NO_WALLET: Don't download/build/cache libs needed to enable the wallet
     NO_UPNP: Don't download/build/cache packages needed for enabling upnp
     DEBUG: disable some optimizations and enable more runtime checking
+    HOST_ID_SALT: Optional salt to use when generating host package ids
+    BUILD_ID_SALT: Optional salt to use when generating build package ids
 
 If some packages are not built, for example `make NO_WALLET=1`, the appropriate
 options will be passed to bitcoin's configure. In this case, `--disable-wallet`.
+
+Additional targets:
+
+    download: run 'make download' to fetch all sources without building them
+    download-osx: run 'make download-osx' to fetch all sources needed for osx builds
+    download-win: run 'make download-win' to fetch all sources needed for win builds
+    download-linux: run 'make download-linux' to fetch all sources needed for linux builds
 
 ### Other documentation
 

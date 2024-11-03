@@ -3,4 +3,8 @@ work/
 built/
 sources/
 config.site
-x86_64-w64-mingw32/
+x86_64*
+i686*
+mips*
+arm*
+aarch64*
