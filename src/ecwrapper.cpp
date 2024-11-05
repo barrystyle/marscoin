@@ -13,6 +13,16 @@
 
 namespace {
 
+
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+{
+    if (pr != NULL)
+        *pr = sig->r;
+    if (ps != NULL)
+        *ps = sig->s;
+}   
+
+
 /**
  * Perform ECDSA key recovery (see SEC1 4.1.6) for curves over (mod p)-fields
  * recid selects which key is recovered
