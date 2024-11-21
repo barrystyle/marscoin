@@ -74,6 +74,7 @@ BITCOIN_CORE_H = \
   alert.h \
   allocators.h \
   amount.h \
+  auxpow.h \
   base58.h \
   bloom.h \
   chain.h \
@@ -89,6 +90,7 @@ BITCOIN_CORE_H = \
   compressor.h \
   primitives/block.h \
   primitives/transaction.h \
+  primitives/pureheader.h \
   core_io.h \
   crypter.h \
   db.h \
@@ -235,12 +237,15 @@ libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   allocators.cpp \
   amount.cpp \
+  arith_uint256.cpp \
+  auxpow.cpp \
   base58.cpp \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
   primitives/block.cpp \
   primitives/transaction.cpp \
+  primitives/pureheader.cpp \
   core_read.cpp \
   core_write.cpp \
   eccryptoverify.cpp \

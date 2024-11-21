@@ -206,6 +206,38 @@ unsigned int GetNextWorkRequired_V1(const CBlockIndex* pindexLast, const CBlockH
     return bnNew.GetCompact();
 }
 
+bool CheckAuxPowProofOfWork(const CBlockHeader& block)
+{
+    /* Except for legacy blocks with full version 1, ensure that
+       the chain ID is correct.  Legacy blocks are not allowed since
+       the merge-mining start, which is checked in AcceptBlockHeader
+       where the height is known.  */
+    if (!block.IsLegacy() && Params().GetStrictChainId() && block.GetChainId() != Params().GetAuxpowChainId())
+        return error("%s : block does not have our chain ID"
+                     " (got %d, expected %d, full nVersion %d)",
+                     __func__, block.GetChainId(),
+                     Params().GetAuxpowChainId(), block.nVersion);
+    /* If there is no auxpow, just check the block hash.  */
+    if (!block.auxpow)
+    {
+        if (block.IsAuxpow())
+            return error("%s : no auxpow on block with auxpow version",
+                         __func__);
+        if (!CheckProofOfWork(block.GetPoWHash(), block.nBits))
+            return error("%s : non-AUX proof of work failed", __func__);
+        return true;
+    }
+    /* We have auxpow.  Check it.  */
+    if (!block.IsAuxpow())
+        return error("%s : auxpow on block with non-auxpow version", __func__);
+    if (!block.auxpow->check(block.GetHash(), block.GetChainId()))
+        return error("%s : AUX POW is not valid", __func__);
+    if (!CheckProofOfWork(block.auxpow->getParentBlockPoWHash(), block.nBits))
+        return error("%s : AUX proof of work failed", __func__);
+    return true;
+}
+
+
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 {
     bool fNegative;
@@ -465,8 +497,9 @@ unsigned int GravityAsert(const CBlockIndex* pindexLast, const CBlockHeader *pbl
     LogPrintf("Anchor target set from bits: %u\n", pindexAnchor->nBits);
 
     // Calculate the exponent
-    int64_t exponent = ((nTimeDiff - nPowTargetSpacing * (nHeightDiff + 1)) * 65536) / nHalfLife;
-
+    int64_t numerator = ((nTimeDiff - nPowTargetSpacing * (nHeightDiff + 1)) * 65536);
+    int64_t exponent = numerator / nHalfLife;
+    LogPrintf("Calculated Numerator: %lld\n", numerator);
     LogPrintf("Calculated exponent: %lld\n", exponent);
 
     // Decompose exponent into integer and fractional parts
@@ -510,6 +543,9 @@ unsigned int GravityAsert(const CBlockIndex* pindexLast, const CBlockHeader *pbl
     }
 
     // Log the results
+    uint32_t nBits = bnNext.GetCompact();
+    LogPrintf("ASERT Result: nBits=0x%08x\n", nBits);
+    LogPrintf("ASERT Result: nBits=%u\n", nBits);
     
     LogPrintf("Anchor Target: %s\n", bnAnchorTarget.GetHex());
     LogPrintf("Next Target: %s\n", bnNext.GetHex());

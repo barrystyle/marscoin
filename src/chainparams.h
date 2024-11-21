@@ -84,6 +84,12 @@ public:
 
     // Marscoin: Height to enforce v2 block
     int EnforceV2AfterHeight() const { return nEnforceV2AfterHeight; }
+    
+    int32_t GetAuxpowChainId() const { return nAuxpowChainId; }
+    int GetAuxpowStartHeight() const { return nAuxpowStartHeight; }
+    bool GetStrictChainId() const { return fStrictChainId; }
+    int GetLegacyBlocksBefore() const { return nLegacyBlocksBefore; }
+    
 protected:
     CChainParams() {}
 
@@ -119,6 +125,23 @@ protected:
 
     // Marscoin: Height to enforce v2 blocks
     int nEnforceV2AfterHeight;
+    
+    /** Auxpow parameters */
+    int32_t nAuxpowChainId;
+    int nAuxpowStartHeight;
+    bool fStrictChainId;
+    int nLegacyBlocksBefore; // -1 for "always allow"
+    /**
+     * Check whether or not to allow legacy blocks at the given height.
+     * @param nHeight Height of the block to check.
+     * @return True if it is allowed to have a legacy version.
+     */
+    bool AllowLegacyBlocks(unsigned nHeight) const
+    {
+        if (nLegacyBlocksBefore < 0)
+            return true;
+        return static_cast<int> (nHeight) < nLegacyBlocksBefore;
+    }
 };
 
 /** 

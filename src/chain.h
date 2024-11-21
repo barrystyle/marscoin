@@ -7,6 +7,7 @@
 #define BITCOIN_CHAIN_H
 
 #include "primitives/block.h"
+#include "primitives/pureheader.h"
 #include "pow.h"
 #include "tinyformat.h"
 #include "uint256.h"
@@ -197,6 +198,8 @@ public:
         return ret;
     }
 
+    //doge has this line for auxpow PR
+    //CBlockHeader GetBlockHeader(const Consensus::Params& consensusParams) const;
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;

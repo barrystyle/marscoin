@@ -195,6 +195,11 @@ public:
 
         // Marscoin: Mainnet v2 enforced as of block 710k
         nEnforceV2AfterHeight = 1312374;
+        
+        nAuxpowChainId = 0x0062; // 98 - Josh Wise!
+        nAuxpowStartHeight = 3100000;
+        fStrictChainId = true;
+        nLegacyBlocksBefore = 3100000;
     }
 
     const Checkpoints::CCheckpointData& Checkpoints() const 
