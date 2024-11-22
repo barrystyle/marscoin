@@ -97,17 +97,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
     
-    pblock->nVersion = ComputeBlockVersion(pindexPrev);
-
-    // New version:
-    const int32_t nChainId = Params().GetAuxpowChainId();
-    pblock->SetBaseVersion(ComputeBlockVersion(pindexPrev), nChainId));
-
-    // -regtest only: allow overriding block.nVersion with
-    // -blockversion=N to test forking scenarios
-    if (Params().MineBlocksOnDemand())
-        //pblock->nVersion = GetArg("-blockversion", pblock->nVersion);
-        pblock->SetBaseVersion(GetArg("-blockversion", pblock->GetBaseVersion()), nChainId);
 
     // Create coinbase tx
     CMutableTransaction txNew;
@@ -143,6 +132,17 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindexPrev = chainActive.Tip();
         const int nHeight = pindexPrev->nHeight + 1;
+
+        // Now put the version block here
+        pblock->nVersion = ComputeBlockVersion(pindexPrev);
+        // New version:
+        const int32_t nChainId = Params().GetAuxpowChainId();
+        pblock->SetBaseVersion(ComputeBlockVersion(pindexPrev), nChainId);
+        // -regtest only: allow overriding block.nVersion with
+        // -blockversion=N to test forking scenarios
+        if (Params().MineBlocksOnDemand())
+            pblock->SetBaseVersion(GetArg("-blockversion", pblock->GetBaseVersion()), nChainId);
+
         CCoinsViewCache view(pcoinsTip);
 
         // Priority order to process transactions
