@@ -113,6 +113,8 @@ static const unsigned char REJECT_DUST = 0x41;
 static const unsigned char REJECT_INSUFFICIENTFEE = 0x42;
 static const unsigned char REJECT_CHECKPOINT = 0x43;
 
+
+
 struct BlockHasher
 {
     size_t operator()(const uint256& hash) const { return hash.GetLow64(); }
@@ -375,6 +377,15 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos);
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos);
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex);
 
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, bool fCheckPOW = true);
+bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, bool fCheckPOW = true);
+bool ReadBlockHeaderFromDisk(CBlockHeader& block, const CBlockIndex* pindex, bool fCheckPOW = true);
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos, bool fCheckPOW = true);
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex, bool fCheckPOW = true);
 
 /** Functions for validating blocks and updating the block tree */
 

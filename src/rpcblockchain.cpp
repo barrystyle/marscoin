@@ -82,6 +82,9 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDe
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
+    
+    if (block.auxpow)
+        result.push_back(Pair("auxpow", AuxpowToJSON(*block.auxpow)));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -296,7 +299,14 @@ Value getblock(const Array& params, bool fHelp)
     if (!fVerbose)
     {
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
-        ssBlock << block;
+        // If block is a CBlockIndex*, use GetBlockHeader with consensus
+        if (pblockindex) {
+            ssBlock << pblockindex->GetBlockHeader(Params());
+        }
+        // If block is a CBlock, it already contains all data
+        else {
+            ssBlock << block;
+        }
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
         return strHex;
     }
@@ -418,6 +428,37 @@ Value gettxout(const Array& params, bool fHelp)
     ret.push_back(Pair("coinbase", coins.fCoinBase));
 
     return ret;
+}
+
+
+Value AuxpowToJSON(const CAuxPow& auxpow)
+{
+    Value result(Value::VOBJ);
+    {
+        Value tx(Value::VOBJ);
+        tx.push_back(Pair("hex", EncodeHexTx(auxpow)));
+        TxToJSON(auxpow, auxpow.parentBlock.GetHash(), tx);
+        result.push_back(Pair("tx", tx));
+    }
+    result.push_back(Pair("index", auxpow.nIndex));
+    result.push_back(Pair("chainindex", auxpow.nChainIndex));
+    {
+        UniValue branch(Value::VARR);
+        BOOST_FOREACH(const uint256& node, auxpow.vMerkleBranch)
+            branch.push_back(node.GetHex());
+        result.push_back(Pair("merklebranch", branch));
+    }
+    {
+        UniValue branch(Value::VARR);
+        BOOST_FOREACH(const uint256& node, auxpow.vChainMerkleBranch)
+            branch.push_back(node.GetHex());
+        result.push_back(Pair("chainmerklebranch", branch));
+    }
+    CDataStream ssParent(SER_NETWORK, PROTOCOL_VERSION);
+    ssParent << auxpow.parentBlock;
+    const std::string strHex = HexStr(ssParent.begin(), ssParent.end());
+    result.push_back(Pair("parentblock", strHex));
+    return result;
 }
 
 Value verifychain(const Array& params, bool fHelp)

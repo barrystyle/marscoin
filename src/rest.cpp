@@ -115,8 +115,18 @@ static bool rest_block(AcceptedConnection* conn,
             throw RESTERR(HTTP_NOT_FOUND, hashStr + " not found");
     }
 
+//    CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
+//    ssBlock << block;
+    
     CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
-    ssBlock << block;
+    if (pblockindex) {
+        CBlock blockFromDisk;
+        if (!ReadBlockFromDisk(blockFromDisk, pblockindex))
+            throw RESTERR(HTTP_NOT_FOUND, hashStr + " not found");
+        ssBlock << blockFromDisk;
+    } else {
+        ssBlock << block;
+    }
 
     switch (rf) {
     case RF_BINARY: {

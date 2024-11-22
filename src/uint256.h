@@ -232,6 +232,13 @@ public:
     void SetHex(const char* psz);
     void SetHex(const std::string& str);
     std::string ToString() const;
+    
+    // Add to uint256 class in your current uint256.h:
+    void SetNull() 
+    {
+        for (int i = 0; i < WIDTH; i++)
+            pn[i] = 0;
+    }
 
     unsigned char* begin()
     {

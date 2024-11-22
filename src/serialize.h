@@ -87,6 +87,7 @@ enum
 
 #define READWRITE(obj)(::SerReadWrite(s, (obj), nType, nVersion, ser_action))
 
+
 /** 
  * Implement three methods for serializable objects. These are actually wrappers over
  * "SerializationOp" template, which implements the body of each class' serialization

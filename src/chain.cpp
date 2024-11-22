@@ -4,27 +4,33 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
-#include "validation.h"
+#include "main.h" 
 
 using namespace std;
-/* Moved here from the header, because we need auxpow and the logic
-   becomes more involved.  */
-CBlockHeader CBlockIndex::GetBlockHeader(const Consensus::Params& consensusParams) const
+
+
+// In chain.cpp, modify GetBlockHeader():
+CBlockHeader CBlockIndex::GetBlockHeader() const
 {
     CBlockHeader block;
-    /* The CBlockIndex object's block header is missing the auxpow.
-       So if this is an auxpow block, read it from disk instead.  We only
-       have to read the actual *header*, not the full block.  */
-    if (block.IsAuxpow())
+    // The CBlockIndex object's block header is missing the auxpow.
+    // So if this is an auxpow block, read it from disk instead.
+    if (this->nVersion & BLOCK_VERSION_AUXPOW)  // Define this constant if not already defined
     {
-        ReadBlockHeaderFromDisk(block, this, consensusParams);
+        if (!ReadBlockHeaderFromDisk(block, this, false))  // false = don't check POW here
+        {
+            // Handle error - return empty header
+            block.SetNull();
+            return block;
+        }
         return block;
     }
-    block.nVersion       = nVersion;
+
+    block.nVersion        = nVersion;
     if (pprev)
         block.hashPrevBlock = pprev->GetBlockHash();
-    block.hashMerkleRoot = hashMerkleRoot;
-    block.nTime          = nTime;
+    block.hashMerkleRoot  = hashMerkleRoot;
+    block.nTime           = nTime;
     block.nBits          = nBits;
     block.nNonce         = nNonce;
     return block;

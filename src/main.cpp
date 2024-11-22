@@ -1163,7 +1163,7 @@ bool GetTransaction(const uint256 &hash, CTransaction &txOut, uint256 &hashBlock
 
     if (pindexSlow) {
         CBlock block;
-        if (ReadBlockFromDisk(block, pindexSlow)) {
+        if (ReadBlockFromDisk(block, pindexSlow, true)) {
             BOOST_FOREACH(const CTransaction &tx, block.vtx) {
                 if (tx.GetHash() == hash) {
                     txOut = tx;
@@ -1207,38 +1207,61 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
 
     return true;
 }
-
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
 {
     block.SetNull();
 
-    // Open history file to read
     CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
     if (filein.IsNull())
-        return error("ReadBlockFromDisk : OpenBlockFile failed");
+        return error("ReadBlockFromDisk: OpenBlockFile failed");
 
-    // Read block
     try {
         filein >> block;
     }
-    catch (std::exception &e) {
-        return error("%s : Deserialize or I/O error - %s", __func__, e.what());
+    catch (const std::exception& e) {
+        return error("%s: Deserialize or I/O error - %s", __func__, e.what());
     }
 
-    // Check the header
+    // Check proof of work whether regular or AuxPoW
     if (!CheckProofOfWork(block.GetPoWHash(), block.nBits))
-        return error("ReadBlockFromDisk : Errors in block header");
+        return error("ReadBlockFromDisk: Errors in block header");
 
     return true;
 }
 
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
 {
-    if (!ReadBlockFromDisk(block, pindex->GetBlockPos()))
+    if (!ReadBlockFromDisk(block, pindex->GetBlockPos(), true))
         return false;
     if (block.GetHash() != pindex->GetBlockHash())
         return error("ReadBlockFromDisk(CBlock&, CBlockIndex*) : GetHash() doesn't match index");
     return true;
+}
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex, bool fCheckPOW)
+{
+    if (!ReadBlockOrHeader(block, pindex->GetBlockPos(), fCheckPOW))
+        return false;
+    if (block.GetHash() != pindex->GetBlockHash())
+        return error("ReadBlockOrHeader(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
+                pindex->ToString(), pindex->GetBlockPos().ToString());
+    return true;
+}
+
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, bool fCheckPOW)
+{
+    return ReadBlockOrHeader(block, pos, fCheckPOW);
+}
+
+bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, bool fCheckPOW)
+{
+    return ReadBlockOrHeader(block, pindex, fCheckPOW);
+}
+
+bool ReadBlockHeaderFromDisk(CBlockHeader& block, const CBlockIndex* pindex, bool fCheckPOW)
+{
+    return ReadBlockOrHeader(block, pindex, fCheckPOW);
 }
 
 CAmount GetBlockValue(int nHeight, const CAmount& nFees)
@@ -1922,10 +1945,10 @@ void static UpdateTip(CBlockIndex *pindexNew) {
     {
         int nUpgraded = 0;
         const CBlockIndex* pindex = chainActive.Tip();
-        for (int i = 0; i < 100 && pindex != NULL; i++)
-        {
-            if (pindex->nVersion > CBlock::CURRENT_VERSION)
+        for (int i = 0; i < 100 && pindex != NULL; i++) {
+            if (CBlockHeader::GetBaseVersion(pindex->nVersion) > CBlockHeader::GetBaseVersion(CBlockHeader::CURRENT_VERSION)) {
                 ++nUpgraded;
+            }
             pindex = pindex->pprev;
         }
         if (nUpgraded > 0)
@@ -1947,7 +1970,7 @@ bool static DisconnectTip(CValidationState &state) {
     mempool.check(pcoinsTip);
     // Read block from disk.
     CBlock block;
-    if (!ReadBlockFromDisk(block, pindexDelete))
+    if (!ReadBlockFromDisk(block, pindexDelete, true))
         return state.Abort("Failed to read block");
     // Apply the block atomically to the chain state.
     int64_t nStart = GetTimeMicros();
@@ -1998,7 +2021,7 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew, CBlock *
     int64_t nTime1 = GetTimeMicros();
     CBlock block;
     if (!pblock) {
-        if (!ReadBlockFromDisk(block, pindexNew))
+        if (!ReadBlockFromDisk(block, pindexNew, true))
             return state.Abort("Failed to read block");
         pblock = &block;
     }
@@ -3099,7 +3122,7 @@ bool CVerifyDB::VerifyDB(CCoinsView *coinsview, int nCheckLevel, int nCheckDepth
             break;
         CBlock block;
         // check level 0: read from disk
-        if (!ReadBlockFromDisk(block, pindex))
+        if (!ReadBlockFromDisk(block, pindex, true))
             return error("VerifyDB() : *** ReadBlockFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
         // check level 1: verify block validity
         if (nCheckLevel >= 1 && !CheckBlock(block, state))
@@ -3139,7 +3162,7 @@ bool CVerifyDB::VerifyDB(CCoinsView *coinsview, int nCheckLevel, int nCheckDepth
             uiInterface.ShowProgress(_("Verifying blocks..."), std::max(1, std::min(99, 100 - (int)(((double)(chainActive.Height() - pindex->nHeight)) / (double)nCheckDepth * 50))));
             pindex = chainActive.Next(pindex);
             CBlock block;
-            if (!ReadBlockFromDisk(block, pindex))
+            if (!ReadBlockFromDisk(block, pindex, true))
                 return error("VerifyDB() : *** ReadBlockFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
             if (!ConnectBlock(block, state, pindex, coins))
                 return error("VerifyDB() : *** found unconnectable block at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
@@ -3283,7 +3306,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
                     std::pair<std::multimap<uint256, CDiskBlockPos>::iterator, std::multimap<uint256, CDiskBlockPos>::iterator> range = mapBlocksUnknownParent.equal_range(head);
                     while (range.first != range.second) {
                         std::multimap<uint256, CDiskBlockPos>::iterator it = range.first;
-                        if (ReadBlockFromDisk(block, it->second))
+                        if (ReadBlockFromDisk(block, it->second, true))
                         {
                             LogPrintf("%s: Processing out of order child %s of %s\n", __func__, block.GetHash().ToString(),
                                     head.ToString());
@@ -3589,7 +3612,7 @@ void static ProcessGetData(CNode* pfrom)
                 {
                     // Send block from disk
                     CBlock block;
-                    if (!ReadBlockFromDisk(block, (*mi).second))
+                    if (!ReadBlockFromDisk(block, (*mi).second, true))
                         assert(!"cannot load block from disk");
                     if (inv.type == MSG_BLOCK)
                         pfrom->PushMessage("block", block);

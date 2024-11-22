@@ -6,7 +6,7 @@
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 #include "auxpow.h"
-
+#include "main.h"
 #include "compat/endian.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"

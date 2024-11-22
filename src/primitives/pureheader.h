@@ -24,6 +24,8 @@ public:
 
     /** Bits above are reserved for the auxpow chain ID.  */
     static const int32_t VERSION_CHAIN_START = (1 << 16);
+    
+    static const int32_t CURRENT_VERSION=4;
 
     // header
     int32_t nVersion;
@@ -38,18 +40,28 @@ public:
         SetNull();
     }
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
-    {
-        READWRITE(this->nVersion);
-        READWRITE(hashPrevBlock);
-        READWRITE(hashMerkleRoot);
-        READWRITE(nTime);
-        READWRITE(nBits);
-        READWRITE(nNonce);
+    // Instead of ADD_SERIALIZE_METHODS, we'll implement the methods directly
+    template<typename Stream>
+    void Serialize(Stream& s, int nType, int nVersion) const {
+        WRITEDATA(s, this->nVersion);
+        WRITEDATA(s, hashPrevBlock);
+        WRITEDATA(s, hashMerkleRoot);
+        WRITEDATA(s, nTime);
+        WRITEDATA(s, nBits);
+        WRITEDATA(s, nNonce);
     }
+    
+    
+    template<typename Stream>
+    void Unserialize(Stream& s, int nType, int nVersion) {
+        READDATA(s, nVersion);
+        READDATA(s, hashPrevBlock);
+        READDATA(s, hashMerkleRoot);
+        READDATA(s, nTime);
+        READDATA(s, nBits);
+        READDATA(s, nNonce);
+    }
+
 
     void SetNull()
     {

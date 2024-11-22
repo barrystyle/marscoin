@@ -5,6 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "pow.h"
+#include "auxpow.h"
 
 #include "chain.h"
 #include "chainparams.h"
