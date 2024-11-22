@@ -97,11 +97,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
     
-    pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    pblock->nVersion = ComputeBlockVersion(pindexPrev);
 
     // New version:
     const int32_t nChainId = Params().GetAuxpowChainId();
-    pblock->SetBaseVersion(ComputeBlockVersion(pindexPrev, Params().GetConsensus()), nChainId);
+    pblock->SetBaseVersion(ComputeBlockVersion(pindexPrev), nChainId));
 
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios

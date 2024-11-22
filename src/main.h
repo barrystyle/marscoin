@@ -371,6 +371,7 @@ public:
     ScriptError GetScriptError() const { return error; }
 };
 
+int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev);
 
 /** Functions for disk access for blocks */
 bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos);
