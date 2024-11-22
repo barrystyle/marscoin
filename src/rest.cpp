@@ -111,7 +111,7 @@ static bool rest_block(AcceptedConnection* conn,
             throw RESTERR(HTTP_NOT_FOUND, hashStr + " not found");
 
         pblockindex = mapBlockIndex[hash];
-        if (!ReadBlockFromDisk(block, pblockindex))
+        if (!ReadBlockFromDisk(block, pblockindex, true))
             throw RESTERR(HTTP_NOT_FOUND, hashStr + " not found");
     }
 
@@ -121,7 +121,7 @@ static bool rest_block(AcceptedConnection* conn,
     CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
     if (pblockindex) {
         CBlock blockFromDisk;
-        if (!ReadBlockFromDisk(blockFromDisk, pblockindex))
+        if (!ReadBlockFromDisk(blockFromDisk, pblockindex, true))
             throw RESTERR(HTTP_NOT_FOUND, hashStr + " not found");
         ssBlock << blockFromDisk;
     } else {
