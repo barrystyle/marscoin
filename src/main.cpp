@@ -1393,6 +1393,27 @@ void Misbehaving(NodeId pnode, int howmuch)
         LogPrintf("Misbehaving: %s (%d -> %d)\n", state->name, state->nMisbehavior-howmuch, state->nMisbehavior);
 }
 
+
+int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev)
+{
+    LOCK(cs_main);
+    // Start with basic version
+    int32_t nVersion = CBlockHeader::CURRENT_VERSION;
+    
+    // Preserve auxpow flag if needed
+    if (pindexPrev && pindexPrev->IsAuxpow()) {
+        nVersion |= CPureBlockHeader::VERSION_AUXPOW;
+    }
+
+    // Preserve chain ID 
+    if (pindexPrev) {
+        nVersion |= (pindexPrev->GetChainId() * CPureBlockHeader::VERSION_CHAIN_START);
+    }
+
+    return nVersion;
+}
+
+
 void static InvalidChainFound(CBlockIndex* pindexNew)
 {
     if (!pindexBestInvalid || pindexNew->nChainWork > pindexBestInvalid->nChainWork)
