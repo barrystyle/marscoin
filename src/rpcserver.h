@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <string>
 
+#include "auxpow.h"
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_utils.h"
 #include "json/json_spirit_writer_template.h"
@@ -36,6 +37,7 @@
 
 class CBlockIndex;
 class CNetAddr;
+class CAuxPow; 
 
 class AcceptedConnection
 {
@@ -153,6 +155,7 @@ extern std::string HelpExampleRpc(std::string methodname, std::string args);
 
 extern void EnsureWalletIsUnlocked();
 
+extern json_spirit::Value AuxpowToJSON(const CAuxPow& auxpow);
 extern json_spirit::Value getconnectioncount(const json_spirit::Array& params, bool fHelp); // in rpcnet.cpp
 extern json_spirit::Value getpeerinfo(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value ping(const json_spirit::Array& params, bool fHelp);
@@ -176,6 +179,10 @@ extern json_spirit::Value getblocktemplate(const json_spirit::Array& params, boo
 extern json_spirit::Value submitblock(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value estimatefee(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value estimatepriority(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value getauxblock(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value createauxblock(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value submitauxblock(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getnewaddress(const json_spirit::Array& params, bool fHelp); // in rpcwallet.cpp
 extern json_spirit::Value getaccountaddress(const json_spirit::Array& params, bool fHelp);

@@ -8,22 +8,19 @@
 #include "auxpow.h"
 #include "main.h"
 #include "compat/endian.h"
-#include "consensus/consensus.h"
 #include "consensus/merkle.h"
-#include "consensus/validation.h"
 #include "hash.h"
 #include "script/script.h"
 #include "txmempool.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "validation.h"
 
 #include <algorithm>
 
 /* Moved from wallet.cpp.  CMerkleTx is necessary for auxpow, independent
    of an enabled (or disabled) wallet.  Always include the code.  */
 
-const uint256 CMerkleTx::ABANDON_HASH(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
+const uint256 CMerkleTx::ABANDON_HASH(uint256("0000000000000000000000000000000000000000000000000000000000000001"));
 
 void CMerkleTx::SetMerkleBranch(const CBlockIndex* pindex, int posInBlock)
 {

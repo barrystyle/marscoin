@@ -8,6 +8,7 @@
 #include "rpcserver.h"
 #include "sync.h"
 #include "util.h"
+#include "core_io.h"
 
 #include <stdint.h>
 
@@ -84,6 +85,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDe
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
     
     if (block.auxpow)
+
         result.push_back(Pair("auxpow", AuxpowToJSON(*block.auxpow)));
 
     if (blockindex->pprev)
@@ -293,7 +295,7 @@ Value getblock(const Array& params, bool fHelp)
     CBlock block;
     CBlockIndex* pblockindex = mapBlockIndex[hash];
 
-    if(!ReadBlockFromDisk(block, pblockindex))
+    if(!ReadBlockFromDisk(block, pblockindex, true))
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
 
     if (!fVerbose)
@@ -301,7 +303,7 @@ Value getblock(const Array& params, bool fHelp)
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
         // If block is a CBlockIndex*, use GetBlockHeader with consensus
         if (pblockindex) {
-            ssBlock << pblockindex->GetBlockHeader(Params());
+            ssBlock << pblockindex->GetBlockHeader();
         }
         // If block is a CBlock, it already contains all data
         else {
@@ -433,9 +435,9 @@ Value gettxout(const Array& params, bool fHelp)
 
 Value AuxpowToJSON(const CAuxPow& auxpow)
 {
-    Value result(Value::VOBJ);
+    Object result;
     {
-        Value tx(Value::VOBJ);
+        Object tx;
         tx.push_back(Pair("hex", EncodeHexTx(auxpow)));
         TxToJSON(auxpow, auxpow.parentBlock.GetHash(), tx);
         result.push_back(Pair("tx", tx));
@@ -443,13 +445,13 @@ Value AuxpowToJSON(const CAuxPow& auxpow)
     result.push_back(Pair("index", auxpow.nIndex));
     result.push_back(Pair("chainindex", auxpow.nChainIndex));
     {
-        UniValue branch(Value::VARR);
+        Array branch;
         BOOST_FOREACH(const uint256& node, auxpow.vMerkleBranch)
             branch.push_back(node.GetHex());
         result.push_back(Pair("merklebranch", branch));
     }
     {
-        UniValue branch(Value::VARR);
+        Array branch;
         BOOST_FOREACH(const uint256& node, auxpow.vChainMerkleBranch)
             branch.push_back(node.GetHex());
         result.push_back(Pair("chainmerklebranch", branch));
@@ -458,7 +460,7 @@ Value AuxpowToJSON(const CAuxPow& auxpow)
     ssParent << auxpow.parentBlock;
     const std::string strHex = HexStr(ssParent.begin(), ssParent.end());
     result.push_back(Pair("parentblock", strHex));
-    return result;
+    return Value(result);
 }
 
 Value verifychain(const Array& params, bool fHelp)

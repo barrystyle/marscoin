@@ -3,6 +3,7 @@
 #define BITCOIN_PRIMITIVES_MERKLETX_H
 
 #include "primitives/transaction.h"
+#include "primitives/block.h"
 #include "uint256.h"
 #include "amount.h"
 
@@ -61,11 +62,14 @@ public:
         ::Unserialize(s, nIndex, nType, nVersion);
     }
 
+    void SetMerkleBranch(const CBlockIndex* pindex, int posInBlock);
+    void InitMerkleBranch(const CBlock& block, int posInBlock);
     int GetDepthInMainChain(const CBlockIndex* &pindexRet) const;
     int GetDepthInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet); }
     bool IsInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet) > 0; }
     int GetBlocksToMaturity() const;
     bool AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& state);
+    bool hashUnset() const { return (hashBlock == uint256() || hashBlock == ABANDON_HASH); }
 };
 
 #endif // BITCOIN_PRIMITIVES_MERKLETX_H

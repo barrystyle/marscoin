@@ -6,7 +6,6 @@
 #ifndef BITCOIN_PRIMITIVES_BLOCK_H
 #define BITCOIN_PRIMITIVES_BLOCK_H
 
-#include "auxpow.h"
 #include "primitives/transaction.h"
 #include "primitives/pureheader.h"
 
@@ -14,6 +13,8 @@
 #include "uint256.h"
 
 #include <boost/shared_ptr.hpp>
+
+class CAuxPow; // Forward declaration
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
 static const unsigned int MAX_BLOCK_SIZE = 1000000;
