@@ -6,6 +6,8 @@
 #include "primitives/block.h"
 #include "auxpow.h"
 #include "hash.h"
+#include "streams.h"  // For CDataStream
+#include "version.h"  // For serialization version info
 
 #include "tinyformat.h"
 #include "utilstrencodings.h"
@@ -158,3 +160,8 @@ void CBlockHeader::SerializationOp(Stream& s, Operation ser_action, int nType, i
 #include "serialize.h"
 template void CBlockHeader::SerializationOp<CDataStream, CSerActionSerialize>(CDataStream&, CSerActionSerialize, int, int);
 template void CBlockHeader::SerializationOp<CDataStream, CSerActionUnserialize>(CDataStream&, CSerActionUnserialize, int, int);
+
+template void CBlockHeader::SerializationOp<CSizeComputer, CSerActionSerialize>(CSizeComputer&, CSerActionSerialize, int, int);
+template void CBlockHeader::SerializationOp<CAutoFile, CSerActionSerialize>(CAutoFile&, CSerActionSerialize, int, int);
+template void CBlockHeader::SerializationOp<CAutoFile, CSerActionUnserialize>(CAutoFile&, CSerActionUnserialize, int, int);
+template void CBlockHeader::SerializationOp<CBufferedFile, CSerActionUnserialize>(CBufferedFile&, CSerActionUnserialize, int, int);

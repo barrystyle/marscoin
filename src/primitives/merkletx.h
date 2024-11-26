@@ -18,6 +18,10 @@ class CMerkleTx : public CTransaction
 private:
     /** Constant used in hashBlock to indicate tx has been abandoned */
     static const uint256 ABANDON_HASH;
+    int GetDepthInMainChainINTERNAL(const CBlockIndex* &pindexRet) const;
+    mutable bool fMerkleVerified;  // I see this used in GetDepthInMainChainINTERNAL
+
+    
 
 public:
     uint256 hashBlock;
@@ -62,13 +66,23 @@ public:
         ::Unserialize(s, nIndex, nType, nVersion);
     }
 
+   
+    // Merkle methods
+    int SetMerkleBranch(const CBlock& block);
     void SetMerkleBranch(const CBlockIndex* pindex, int posInBlock);
     void InitMerkleBranch(const CBlock& block, int posInBlock);
+
+    // Chain verification methods
     int GetDepthInMainChain(const CBlockIndex* &pindexRet) const;
     int GetDepthInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet); }
     bool IsInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet) > 0; }
     int GetBlocksToMaturity() const;
+
+    // Memory pool methods
+    bool AcceptToMemoryPool(bool fLimitFree, bool fRejectInsaneFee);
     bool AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& state);
+
+    // Utility methods
     bool hashUnset() const { return (hashBlock == uint256() || hashBlock == ABANDON_HASH); }
 };
 

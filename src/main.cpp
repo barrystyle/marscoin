@@ -1207,7 +1207,8 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
 
     return true;
 }
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
+// Remove the ambiguous overloads and consolidate into a single implementation
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, bool fCheckPOW = true)
 {
     block.SetNull();
 
@@ -1222,44 +1223,59 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
         return error("%s: Deserialize or I/O error - %s", __func__, e.what());
     }
 
-    // Check proof of work whether regular or AuxPoW
-    if (!CheckProofOfWork(block.GetPoWHash(), block.nBits))
+    // Check the header first
+    if (fCheckPOW && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
         return error("ReadBlockFromDisk: Errors in block header");
 
     return true;
 }
 
-bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
+bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, bool fCheckPOW = true)
 {
-    if (!ReadBlockFromDisk(block, pindex->GetBlockPos(), true))
+    if (!ReadBlockFromDisk(block, pindex->GetBlockPos(), fCheckPOW))
         return false;
     if (block.GetHash() != pindex->GetBlockHash())
-        return error("ReadBlockFromDisk(CBlock&, CBlockIndex*) : GetHash() doesn't match index");
-    return true;
-}
-
-template<typename T>
-static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex, bool fCheckPOW)
-{
-    if (!ReadBlockOrHeader(block, pindex->GetBlockPos(), fCheckPOW))
-        return false;
-    if (block.GetHash() != pindex->GetBlockHash())
-        return error("ReadBlockOrHeader(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
+        return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
                 pindex->ToString(), pindex->GetBlockPos().ToString());
     return true;
 }
 
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, bool fCheckPOW)
+// Template implementation for both CBlock and CBlockHeader
+template<typename T>
+bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos, bool fCheckPOW = true) 
 {
-    return ReadBlockOrHeader(block, pos, fCheckPOW);
+    block.SetNull();
+
+    CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
+    if (filein.IsNull())
+        return error("ReadBlockOrHeader: OpenBlockFile failed");
+
+    try {
+        filein >> block;
+    }
+    catch (const std::exception& e) {
+        return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+    }
+
+    if (fCheckPOW && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
+        return error("ReadBlockOrHeader: Errors in header");
+
+    return true;
 }
 
-bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, bool fCheckPOW)
+template<typename T>
+bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex, bool fCheckPOW = true)
 {
-    return ReadBlockOrHeader(block, pindex, fCheckPOW);
+    if (!ReadBlockOrHeader(block, pindex->GetBlockPos(), fCheckPOW))
+        return false;
+    if (block.GetHash() != pindex->GetBlockHash())
+        return error("ReadBlockOrHeader: GetHash() doesn't match index for %s at %s",
+                pindex->ToString(), pindex->GetBlockPos().ToString());
+    return true;
 }
 
-bool ReadBlockHeaderFromDisk(CBlockHeader& block, const CBlockIndex* pindex, bool fCheckPOW)
+// Ensure we have the template specialization for CBlockHeader
+bool ReadBlockHeaderFromDisk(CBlockHeader& block, const CBlockIndex* pindex, bool fCheckPOW = true)
 {
     return ReadBlockOrHeader(block, pindex, fCheckPOW);
 }

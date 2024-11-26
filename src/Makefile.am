@@ -91,6 +91,7 @@ BITCOIN_CORE_H = \
   primitives/block.h \
   primitives/transaction.h \
   primitives/pureheader.h \
+  primitives/merkletx.h \
   core_io.h \
   crypter.h \
   db.h \
@@ -245,6 +246,7 @@ libbitcoin_common_a_SOURCES = \
   primitives/block.cpp \
   primitives/transaction.cpp \
   primitives/pureheader.cpp \
+  primitives/merkletx.cpp \
   core_read.cpp \
   core_write.cpp \
   eccryptoverify.cpp \
