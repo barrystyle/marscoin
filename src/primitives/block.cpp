@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "primitives/block.h"
-
+#include "auxpow.h"
 #include "hash.h"
 
 #include "tinyformat.h"
@@ -137,3 +137,24 @@ std::string CBlock::ToString() const
     s << "\n";
     return s.str();
 }
+
+
+
+// Template implementation
+template <typename Stream, typename Operation>
+void CBlockHeader::SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    READWRITE(*(CPureBlockHeader*)this);
+    if (this->IsAuxpow())
+    {
+        if (ser_action.ForRead())
+            auxpow.reset(new CAuxPow());
+        assert(auxpow);
+        READWRITE(*auxpow);
+    } else if (ser_action.ForRead())
+        auxpow.reset();
+}
+
+// Explicit template instantiations
+#include "serialize.h"
+template void CBlockHeader::SerializationOp<CDataStream, CSerActionSerialize>(CDataStream&, CSerActionSerialize, int, int);
+template void CBlockHeader::SerializationOp<CDataStream, CSerActionUnserialize>(CDataStream&, CSerActionUnserialize, int, int);

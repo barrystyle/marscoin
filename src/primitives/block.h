@@ -14,7 +14,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-class CAuxPow; // Forward declaration
+class CAuxPow;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
 static const unsigned int MAX_BLOCK_SIZE = 1000000;
@@ -42,17 +42,8 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-        READWRITE(*(CPureBlockHeader*)this);
-        if (this->IsAuxpow())
-        {
-            if (ser_action.ForRead())
-                auxpow.reset(new CAuxPow());
-            assert(auxpow);
-            READWRITE(*auxpow);
-        } else if (ser_action.ForRead())
-            auxpow.reset();
-    }
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion);  // Declaration only
+
 
     void SetNull()
     {
